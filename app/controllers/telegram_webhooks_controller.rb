@@ -69,8 +69,18 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def message(message)
     response = CLIENT.text_request(message['text'])
+    snowman = "\u{1F6BD}"
 
-    respond_with :message, text: response[:result][:fulfillment][:speech]
+    respond_with :message, text: snowman
+
+    # respond_with :message, text: 'Bitte wähle aus:', reply_markup: {
+    #   inline_keyboard: [
+    #     [
+    #       {text: 'A', callback_data: 'alert'},
+    #       {text: 'B', callback_data: 'no_alert'},
+    #     ]
+    #   ],
+    # }
   end
 
   def inline_query(query, offset)
