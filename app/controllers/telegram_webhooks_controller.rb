@@ -1,8 +1,15 @@
+require 'api-ai-ruby'
+
 class TelegramWebhooksController < Telegram::Bot::UpdatesController
   include Telegram::Bot::UpdatesController::MessageContext
   context_to_action!
 
+    CLIENT = ApiAiRuby::Client.new(
+        :client_access_token => '947ea6dbbb3d49f384f538611b10ba4f'
+    )
+
   def start(*)
+    byebug
     respond_with :message, text: t('.content')
   end
 
@@ -61,7 +68,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def message(message)
-    respond_with :message, text: t('.content', text: message['text'])
+    response = CLIENT.text_request(message['text'])
+
+    respond_with :message, text: response[:result][:fulfillment][:speech]
   end
 
   def inline_query(query, offset)
@@ -104,4 +113,5 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       respond_with :message, text: t('telegram_webhooks.action_missing.feature', action: action)
     end
   end
+
 end
