@@ -5,12 +5,14 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   context_to_action!
 
     CLIENT = ApiAiRuby::Client.new(
-        :client_access_token => '947ea6dbbb3d49f384f538611b10ba4f'
+        :client_access_token => 'xxx'
     )
 
   def start(*)
-    byebug
-    respond_with :message, text: t('.content')
+    welcome_text = "Vielen Dank, dass Sie bereit sind unser neues Angebot zu testen. Ich bin ein Computer und versuche Ihren Reparaturbedarf zu verstehen, damit ich die Reparatur bestmöglich vorbereiten kann und somit die Reparatur möglichst schnell erledigt werden kann. Ich fange gerade erst an und bin daher noch nicht so smart. Aber ich lerne mit jedem Chat.
+
+Was muss bei Ihnen repariert werden? Bitte seien Sie präzise. \u{1F527}"
+    respond_with :message, text: welcome_text
   end
 
   def help(*)
@@ -69,9 +71,10 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def message(message)
     response = CLIENT.text_request(message['text'])
-    snowman = "\u{1F6BD}"
 
-    respond_with :message, text: snowman
+    puts "RESPONSE: #{ap response}"
+
+    respond_with :message, text: response[:result][:fulfillment][:speech]
 
     # respond_with :message, text: 'Bitte wähle aus:', reply_markup: {
     #   inline_keyboard: [
