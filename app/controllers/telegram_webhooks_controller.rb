@@ -9,9 +9,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     )
 
   def start(*)
-    welcome_text = "Vielen Dank, dass Sie bereit sind unser neues Angebot zu testen. Ich bin ein Computer und versuche Ihren Reparaturbedarf zu verstehen, damit ich die Reparatur bestmöglich vorbereiten kann und somit die Reparatur möglichst schnell erledigt werden kann. Ich fange gerade erst an und bin daher noch nicht so smart. Aber ich lerne mit jedem Chat.
-
-Was muss bei Ihnen repariert werden? (Bspw. Fenster, Türe etc.) \u{1F527}"
+    welcome_text = "Willkommen"
     respond_with :message, text: welcome_text
   end
 
@@ -55,6 +53,9 @@ Was muss bei Ihnen repariert werden? (Bspw. Fenster, Türe etc.) \u{1F527}"
         [
           {text: t('.alert'), callback_data: 'alert'},
           {text: t('.no_alert'), callback_data: 'no_alert'},
+          {text: "\u{1F60A}", callback_data: 'positive'},
+          {text: "\u{1F610}", callback_data: 'neutral'},
+          {text: "\u{1F61E}", callback_data: 'negative'},
         ],
         [{text: t('.repo'), url: 'https://github.com/telegram-bot-rb/telegram-bot'}],
       ],
@@ -62,11 +63,17 @@ Was muss bei Ihnen repariert werden? (Bspw. Fenster, Türe etc.) \u{1F527}"
   end
 
   def message(message)
+    return send_image_received_event if message['photo'].present?
+
     response = CLIENT.text_request(message['text'])
-
-
     puts "RESPONSE: #{ap response}"
 
+    respond_with :message, text: response[:result][:fulfillment][:speech]
+    do_action(response)
+  end
+
+  def send_image_received_event
+    response = CLIENT.event_request 'IMAGE_RECEIVED'
     respond_with :message, text: response[:result][:fulfillment][:speech]
     do_action(response)
   end
@@ -79,7 +86,21 @@ Was muss bei Ihnen repariert werden? (Bspw. Fenster, Türe etc.) \u{1F527}"
         respond_with :photo, photo: File.open(Rails.root.join('app/assets/images/door.png'))
       when 'send_door_multiple_choice'
         send_door_multiple_choice
+      when 'send_feedback_multiple_choice'
+        send_feedback_multiple_choice
     end
+  end
+
+  def send_feedback_multiple_choice
+    respond_with :message, text: 'Bitte wähle aus:', reply_markup: {
+      inline_keyboard: [
+        [
+          {text: "\u{1F60A}", callback_data: 'positive'},
+          {text: "\u{1F610}", callback_data: 'neutral'},
+          {text: "\u{1F61E}", callback_data: 'negative'},
+        ]
+      ],
+    }
   end
 
   def send_door_multiple_choice
