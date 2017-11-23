@@ -5,13 +5,13 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   context_to_action!
 
     CLIENT = ApiAiRuby::Client.new(
-        :client_access_token => 'xxx'
+        :client_access_token => 'a0c1897506d44a75883663521e4b4c85'
     )
 
   def start(*)
     welcome_text = "Vielen Dank, dass Sie bereit sind unser neues Angebot zu testen. Ich bin ein Computer und versuche Ihren Reparaturbedarf zu verstehen, damit ich die Reparatur bestmöglich vorbereiten kann und somit die Reparatur möglichst schnell erledigt werden kann. Ich fange gerade erst an und bin daher noch nicht so smart. Aber ich lerne mit jedem Chat.
 
-Was muss bei Ihnen repariert werden? Bitte seien Sie präzise. \u{1F527}"
+Was muss bei Ihnen repariert werden? (Bspw. Fenster, Türe etc.) \u{1F527}"
     respond_with :message, text: welcome_text
   end
 
@@ -61,29 +61,43 @@ Was muss bei Ihnen repariert werden? Bitte seien Sie präzise. \u{1F527}"
     }
   end
 
-  def callback_query(data)
-    if data == 'alert'
-      answer_callback_query t('.alert'), show_alert: true
-    else
-      answer_callback_query t('.no_alert')
-    end
-  end
-
   def message(message)
     response = CLIENT.text_request(message['text'])
+
 
     puts "RESPONSE: #{ap response}"
 
     respond_with :message, text: response[:result][:fulfillment][:speech]
+    do_action(response)
+  end
 
-    # respond_with :message, text: 'Bitte wähle aus:', reply_markup: {
-    #   inline_keyboard: [
-    #     [
-    #       {text: 'A', callback_data: 'alert'},
-    #       {text: 'B', callback_data: 'no_alert'},
-    #     ]
-    #   ],
-    # }
+  def do_action(response)
+    action = response[:result][:action]
+    return unless action
+    case action
+      when 'send_door_image'
+        respond_with :photo, photo: File.open(Rails.root.join('app/assets/images/door.png'))
+      when 'send_door_multiple_choice'
+        send_door_multiple_choice
+    end
+  end
+
+  def send_door_multiple_choice
+    respond_with :message, text: 'Bitte wähle aus:', reply_markup: {
+      inline_keyboard: [
+        [
+          {text: 'Klinke', callback_data: 'klinke'},
+          {text: 'Schloss', callback_data: 'schloss'},
+          {text: 'Rahmen', callback_data: 'rahmen'},
+          {text: 'Andere', callback_data: 'andere'}
+        ]
+      ],
+    }
+  end
+
+  def callback_query(data)
+    message = {'text' => data}
+    message(message)
   end
 
   def inline_query(query, offset)
